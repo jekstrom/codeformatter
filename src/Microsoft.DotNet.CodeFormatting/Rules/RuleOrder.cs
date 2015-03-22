@@ -34,5 +34,6 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
     internal static class GlobalSemanticRuleOrder
     {
         public const int PrivateFieldNamingRule = 1;
-    }
+		public const int MethodNamingRule = 2;
+	}
 }
