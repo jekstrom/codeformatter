@@ -86,6 +86,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ResponseFileWorkspace.cs" />
+    <Compile Include="Rules\BraceNewLineRule.cs" />
+    <Compile Include="Rules\FormatDocumentFormattingRule.cs" />
     <Compile Include="SyntaxUtil.cs" />
     <Compile Include="Filters\FilenameFilter.cs" />
     <Compile Include="Filters\UsableFileFilter.cs" />
@@ -106,18 +108,15 @@
     <Compile Include="Rules\PrivateFieldNamingRule.CSharp.cs" />
     <Compile Include="Rules\PrivateFieldNamingRule.VisualBasic.cs" />
     <Compile Include="Rules\SyntaxFormattingRule.cs" />
-    <Compile Include="Rules\BraceNewLineRule.cs" />
     <Compile Include="Rules\CopyrightHeaderRule.VisualBasic.cs" />
     <Compile Include="Rules\CopyrightHeaderRule.CSharp.cs" />
     <Compile Include="Rules\CSharpOnlyFormattingRule.cs" />
     <Compile Include="Rules\ExplicitVisibilityRule.cs" />
     <Compile Include="Rules\CopyrightHeaderRule.cs" />
-    <Compile Include="Rules\NewLineAboveRule.cs" />
     <Compile Include="Rules\HasNoIllegalHeadersFormattingRule.cs" />
     <Compile Include="Rules\HasNoCustomCopyrightHeaderFormattingRule.cs" />
     <Compile Include="Rules\PrivateFieldNamingRule.cs" />
     <Compile Include="Rules\UsingLocationRule.cs" />
-    <Compile Include="Rules\FormatDocumentFormattingRule.cs" />
     <Compile Include="Rules\NonAsciiCharactersAreEscapedInLiteralsRule.cs" />
     <Compile Include="Rules\ExplicitThisRule.cs" />
     <Compile Include="Rules\RuleOrder.cs" />

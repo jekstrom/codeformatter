@@ -9,6 +9,8 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Formatting;
+using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.DotNet.CodeFormatting;
 
@@ -183,7 +185,25 @@ namespace CodeFormatter
                 using (var workspace = MSBuildWorkspace.Create())
                 {
                     workspace.LoadMetadataForReferencedProjects = true;
-                    var solution = await workspace.OpenSolutionAsync(projectSolutionOrRspPath, cancellationToken);
+					workspace.Options = workspace.Options
+						.WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInMethods, false)
+						.WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInAnonymousMethods, false)
+						.WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInAnonymousTypes, false)
+						.WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInControlBlocks, false)
+						.WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInLambdaExpressionBody, false)
+						.WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInObjectInitializers, false)
+						.WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInTypes, false)
+						.WithChangedOption(CSharpFormattingOptions.NewLineForCatch, false)
+						.WithChangedOption(CSharpFormattingOptions.NewLineForElse, false)
+						.WithChangedOption(CSharpFormattingOptions.NewLineForFinally, false)
+						.WithChangedOption(CSharpFormattingOptions.SpaceAfterComma, true)
+						.WithChangedOption(CSharpFormattingOptions.SpaceAfterColonInBaseTypeDeclaration, true)
+						.WithChangedOption(CSharpFormattingOptions.SpaceAfterControlFlowStatementKeyword, true)
+						.WithChangedOption(CSharpFormattingOptions.SpaceBeforeColonInBaseTypeDeclaration, true)
+						.WithChangedOption(FormattingOptions.UseTabs, LanguageNames.CSharp, true)
+						.WithChangedOption(FormattingOptions.TabSize, LanguageNames.CSharp, 4);
+
+					var solution = await workspace.OpenSolutionAsync(projectSolutionOrRspPath, cancellationToken);
                     await engine.FormatSolutionAsync(solution, cancellationToken);
                 }
             }

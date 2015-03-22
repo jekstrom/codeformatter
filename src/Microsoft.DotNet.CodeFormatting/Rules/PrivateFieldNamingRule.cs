@@ -77,7 +77,7 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
 
             private static string GetNewFieldName(IFieldSymbol fieldSymbol)
             {
-                var name = fieldSymbol.Name.Trim('_');
+				var name = fieldSymbol.Name;
                 if (name.Length > 2 && char.IsLetter(name[0]) && name[1] == '_')
                 {
                     name = name.Substring(2);
@@ -88,9 +88,9 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
                     return fieldSymbol.Name;
                 }
 
-                if (name.Length > 2 && char.IsUpper(name[0]) && char.IsLower(name[1]))
+                if (name.Length > 2 && !char.IsUpper(name[0]))
                 {
-                    name = char.ToLower(name[0]) + name.Substring(1);
+                    name = char.ToUpper(name[0]) + name.Substring(1);
                 }
 
                 if (fieldSymbol.IsStatic)
@@ -100,13 +100,9 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
                     {
                         return "t_" + name;
                     }
-                    else
-                    {
-                        return "s_" + name;
-                    }
                 }
 
-                return "_" + name;
+                return name;
             }
 
             private async Task<Solution> CleanSolutionAsync(Solution newSolution, Solution oldSolution, CancellationToken cancellationToken)
@@ -181,9 +177,13 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
             {
                 return name.Length > 0 && name[0] == '_';
             }
+			else if (name.Length > 1 && char.IsUpper(name[0])) 
+			{
+				return true;
+			}
             else
             {
-                return name.Length > 1 && (name[0] == 's' || name[0] == 't') && name[1] == '_';
+                return name.Length > 1 && name[0] == 't' && name[1] == '_';
             }
         }
     }
