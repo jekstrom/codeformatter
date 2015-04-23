@@ -28,12 +28,13 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
         public const int ExplicitVisibilityRule = 2;
         public const int IsFormattedFormattingRule = 3;
         public const int RemoveExplicitThisRule = 4;
-    }
+	}
 
     // Please keep these values sorted by number, not rule name.    
     internal static class GlobalSemanticRuleOrder
     {
         public const int PrivateFieldNamingRule = 1;
 		public const int MethodNamingRule = 2;
+		public const int StaticNamingRule = 5;
 	}
 }

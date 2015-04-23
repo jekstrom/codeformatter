@@ -15,14 +15,14 @@ using Microsoft.CodeAnalysis.Rename;
 
 namespace Microsoft.DotNet.CodeFormatting.Rules
 {
-    [GlobalSemanticRuleOrder(GlobalSemanticRuleOrder.PrivateFieldNamingRule)]
-    internal partial class PrivateFieldNamingRule : IGlobalSemanticFormattingRule
+    [GlobalSemanticRuleOrder(GlobalSemanticRuleOrder.MethodNamingRule)]
+    internal partial class MethodNamingRule : IGlobalSemanticFormattingRule
     {
         #region CommonRule
 
         private abstract class CommonRule
         {
-            protected abstract SyntaxNode AddPrivateFieldAnnotations(SyntaxNode syntaxNode, out int count);
+            protected abstract SyntaxNode AddMethodAnnotations(SyntaxNode syntaxNode, out int count);
 
             /// <summary>
             /// This method exists to work around DevDiv 1086632 in Roslyn.  The Rename action is 
@@ -35,7 +35,7 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
             public async Task<Solution> ProcessAsync(Document document, SyntaxNode syntaxRoot, CancellationToken cancellationToken)
             {
                 int count;
-                var newSyntaxRoot = AddPrivateFieldAnnotations(syntaxRoot, out count);
+                var newSyntaxRoot = AddMethodAnnotations(syntaxRoot, out count);
 
                 if (count == 0)
                 {
@@ -45,11 +45,11 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
                 var documentId = document.Id;
                 var solution = document.Project.Solution;
                 solution = solution.WithDocumentSyntaxRoot(documentId, newSyntaxRoot);
-                solution = await RenameFields(solution, documentId, count, cancellationToken);
+                solution = await RenameMethods(solution, documentId, count, cancellationToken);
                 return solution;
             }
 
-            private async Task<Solution> RenameFields(Solution solution, DocumentId documentId, int count, CancellationToken cancellationToken)
+            private async Task<Solution> RenameMethods(Solution solution, DocumentId documentId, int count, CancellationToken cancellationToken)
             {
                 Solution oldSolution = null;
                 for (int i = 0; i < count; i++)
@@ -59,47 +59,38 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
                     var semanticModel = await solution.GetDocument(documentId).GetSemanticModelAsync(cancellationToken);
                     var root = await semanticModel.SyntaxTree.GetRootAsync(cancellationToken);
                     var declaration = root.GetAnnotatedNodes(s_markerAnnotation).ElementAt(i);
-                    var fieldSymbol = (IFieldSymbol)semanticModel.GetDeclaredSymbol(declaration, cancellationToken);
-                    var newName = GetNewFieldName(fieldSymbol);
+                    var methodSymbol = (IMethodSymbol)semanticModel.GetDeclaredSymbol(declaration, cancellationToken);
+                    var newName = GetNewMethodName(methodSymbol);
 
-                    // Can happen with pathologically bad field names like _
-                    if (newName == fieldSymbol.Name)
+                    // Can happen with pathologically bad method names like _
+                    if (newName == methodSymbol.Name)
                     {
                         continue;
                     }
 
-                    solution = await Renamer.RenameSymbolAsync(solution, fieldSymbol, newName, solution.Workspace.Options, cancellationToken).ConfigureAwait(false);
+                    solution = await Renamer.RenameSymbolAsync(solution, methodSymbol, newName, solution.Workspace.Options, cancellationToken).ConfigureAwait(false);
                     solution = await CleanSolutionAsync(solution, oldSolution, cancellationToken);
                 }
 
                 return solution;
             }
 
-            private static string GetNewFieldName(IFieldSymbol fieldSymbol)
+            private static string GetNewMethodName(IMethodSymbol methodSymbol)
             {
-				var name = fieldSymbol.Name;
+				var name = methodSymbol.Name;
                 if (name.Length > 2 && char.IsLetter(name[0]) && name[1] == '_')
                 {
-					name = "_" + char.ToLower(name[2]) + name.Substring(3);
+                    name = name.Substring(2);
                 }
 
                 if (name.Length == 0)
                 {
-                    return fieldSymbol.Name;
+                    return methodSymbol.Name;
                 }
 
-                if (name.Length > 2 && name[0] != '_')
+                if (name.Length > 2 && !char.IsUpper(name[0]))
                 {
-                    name = "_" + char.ToLower(name[0]) + name.Substring(1);
-                }
-
-                if (fieldSymbol.IsStatic)
-                {
-                    // Check for ThreadStatic private fields.
-                    if (fieldSymbol.GetAttributes().Any(a => a.AttributeClass.Name.Equals("ThreadStaticAttribute", StringComparison.Ordinal)))
-                    {
-                        return "t_" + name;
-                    }
+                    name = char.ToUpper(name[0]) + name.Substring(1);
                 }
 
                 return name;
@@ -138,18 +129,17 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
 
         private const string s_renameAnnotationName = "Rename";
 
-        private readonly static SyntaxAnnotation s_markerAnnotation = new SyntaxAnnotation("PrivateFieldToRename");
+        private readonly static SyntaxAnnotation s_markerAnnotation = new SyntaxAnnotation("MethodToRename");
 
         // Used to avoid the array allocation on calls to WithAdditionalAnnotations
         private readonly static SyntaxAnnotation[] s_markerAnnotationArray;
 
-        static PrivateFieldNamingRule()
+        static MethodNamingRule()
         {
             s_markerAnnotationArray = new[] { s_markerAnnotation };
         }
 
         private readonly CSharpRule _csharpRule = new CSharpRule();
-        private readonly VisualBasicRule _visualBasicRule = new VisualBasicRule();
 
         public bool SupportsLanguage(string languageName)
         {
@@ -165,26 +155,15 @@ namespace Microsoft.DotNet.CodeFormatting.Rules
                 case LanguageNames.CSharp:
                     return _csharpRule.ProcessAsync(document, syntaxRoot, cancellationToken);
                 case LanguageNames.VisualBasic:
-                    return _visualBasicRule.ProcessAsync(document, syntaxRoot, cancellationToken);
-                default:
+					throw new NotSupportedException();
+				default:
                     throw new NotSupportedException();
             }
         }
 
-        private static bool IsGoodPrivateFieldName(string name, bool isInstance)
+        private static bool IsGoodMethodName(string name)
         {
-            if (isInstance)
-            {
-                return name.Length > 0 && name[0] == '_';
-            }
-			else if (name.Length > 1 && char.IsUpper(name[0])) 
-			{
-				return true;
-			}
-            else
-            {
-                return name.Length > 1 && name[0] == 't' && name[1] == '_';
-            }
+			return name.Length > 1 && char.IsUpper(name[0]);
         }
     }
 }
